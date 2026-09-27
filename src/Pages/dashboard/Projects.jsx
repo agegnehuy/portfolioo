@@ -11,6 +11,7 @@ import {
   Github,
   Pencil,
 } from "lucide-react";
+import { toSlug } from "../../utils/slug";
 
 const Card = ({ children, className = "" }) => (
   <div className={`relative group ${className}`}>
@@ -192,6 +193,21 @@ const ProjectForm = ({
 }) => {
   const [form, setForm] = useState({
     Title: initial?.Title || "",
+    slug: initial?.slug || "",
+    category: initial?.category || "",
+    tags: Array.isArray(initial?.tags) ? initial.tags.join(", ") : "",
+    client: initial?.client || "",
+    project_role: initial?.project_role || "",
+    started_at: initial?.started_at || "",
+    completed_at: initial?.completed_at || "",
+    challenge: initial?.challenge || "",
+    approach: initial?.approach || "",
+    outcome: initial?.outcome || "",
+    credits: initial?.credits || "",
+    gallery: Array.isArray(initial?.gallery) ? initial.gallery.map((item) => `${item.caption || "Screenshot"}|${item.url || item}`).join("\n") : "",
+    is_published: initial?.is_published ?? true,
+    is_featured: initial?.is_featured ?? false,
+    order_index: initial?.order_index || 0,
     Description: initial?.Description || "",
     TechStack: Array.isArray(initial?.TechStack)
       ? initial.TechStack.join(", ")
@@ -210,6 +226,7 @@ const ProjectForm = ({
   const handleFileChange = (e) => {
     const f = e.target.files[0];
     if (!f) return;
+    if (!f.type.startsWith("image/") || f.size > 5 * 1024 * 1024) { alert("Choose a PNG, JPG, or WEBP image smaller than 5MB."); return; }
     setFile(f);
     setPreview(URL.createObjectURL(f));
   };
@@ -245,6 +262,19 @@ const ProjectForm = ({
             className="w-full bg-[#0d0d22] border border-white/10 rounded-xl px-4 py-2.5 text-gray-200 placeholder-gray-600 text-sm outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/20 transition-all resize-none"
           />
         </div>
+        <InputField label="Stable slug" value={form.slug} onChange={set("slug")} placeholder="my-project-name" />
+        <InputField label="Category" value={form.category} onChange={set("category")} placeholder="Product, client work, or tool" />
+        <InputField label="Client or context" value={form.client} onChange={set("client")} placeholder="Personal, educational, organization" />
+        <InputField label="Your exact role" value={form.project_role} onChange={set("project_role")} placeholder="Designer and developer" />
+        <InputField label="Start date" type="date" value={form.started_at} onChange={set("started_at")} />
+        <InputField label="Completion date" type="date" value={form.completed_at} onChange={set("completed_at")} />
+        <InputField label="Tags (comma separated)" value={form.tags} onChange={set("tags")} placeholder="Portfolio, CMS, React" />
+        <InputField label="Display order" type="number" value={form.order_index} onChange={set("order_index")} />
+        {[ ["challenge", "Challenge"], ["approach", "Approach"], ["outcome", "Outcome and evidence"], ["credits", "Credits and contribution"], ["gallery", "Gallery: caption|image URL, one per line"] ].map(([key, label]) => (
+          <label key={key} className="sm:col-span-2 space-y-1.5"><span className="block text-xs text-indigo-300/70 uppercase tracking-wider font-medium">{label}</span><textarea value={form[key]} onChange={set(key)} rows={3} className="w-full bg-[#0d0d22] border border-white/10 rounded-xl px-4 py-2.5 text-gray-200 text-sm outline-none focus:border-indigo-500/60" /></label>
+        ))}
+        <label className="flex items-center gap-3 text-sm text-gray-300"><input type="checkbox" checked={form.is_published} onChange={(e) => setForm((f) => ({ ...f, is_published: e.target.checked }))} /> Published</label>
+        <label className="flex items-center gap-3 text-sm text-gray-300"><input type="checkbox" checked={form.is_featured} onChange={(e) => setForm((f) => ({ ...f, is_featured: e.target.checked }))} /> Featured</label>
 
         <InputField
           label="Tech Stack (comma separated)"
@@ -332,6 +362,17 @@ const ProjectForm = ({
 };
 
 export default function Projects() {
+  const projectPayload = (form, imgUrl) => ({
+    Title: form.Title, Description: form.Description, Img: imgUrl,
+    slug: form.slug || toSlug(form.Title), category: form.category, client: form.client, project_role: form.project_role,
+    started_at: form.started_at || null, completed_at: form.completed_at || null, challenge: form.challenge, approach: form.approach, outcome: form.outcome, credits: form.credits,
+    tags: form.tags.split(",").map((s) => s.trim()).filter(Boolean),
+    TechStack: form.TechStack.split(",").map((s) => s.trim()).filter(Boolean),
+    Features: form.Features.split(",").map((s) => s.trim()).filter(Boolean),
+    gallery: form.gallery.split("\n").map((line) => { const [caption, ...url] = line.split("|"); return { caption: caption.trim(), url: url.join("|").trim() }; }).filter((item) => item.url),
+    Link: form.Link, Github: form.Github, is_published: form.is_published, is_featured: form.is_featured, order_index: Number(form.order_index) || 0,
+  });
+
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
@@ -365,19 +406,7 @@ export default function Projects() {
     setUploading(true);
     let imgUrl = "";
     if (file) imgUrl = await uploadImage(file);
-    await supabase.from("projects").insert({
-      Title: form.Title,
-      Description: form.Description,
-      Img: imgUrl,
-      TechStack: form.TechStack.split(",")
-        .map((s) => s.trim())
-        .filter(Boolean),
-      Features: form.Features.split(",")
-        .map((s) => s.trim())
-        .filter(Boolean),
-      Link: form.Link,
-      Github: form.Github,
-    });
+    await supabase.from("projects").insert(projectPayload(form, imgUrl));
     setShowCreate(false);
     setUploading(false);
     fetchProjects();
@@ -389,19 +418,7 @@ export default function Projects() {
     if (file) imgUrl = await uploadImage(file);
     await supabase
       .from("projects")
-      .update({
-        Title: form.Title,
-        Description: form.Description,
-        Img: imgUrl,
-        TechStack: form.TechStack.split(",")
-          .map((s) => s.trim())
-          .filter(Boolean),
-        Features: form.Features.split(",")
-          .map((s) => s.trim())
-          .filter(Boolean),
-        Link: form.Link,
-        Github: form.Github,
-      })
+      .update(projectPayload(form, imgUrl))
       .eq("id", editProject.id);
     setEditProject(null);
     setUploading(false);

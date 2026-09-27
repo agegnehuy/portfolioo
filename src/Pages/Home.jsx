@@ -1,8 +1,10 @@
-import React, { useState, useEffect, useCallback, memo } from "react"
+import React, { Suspense, lazy, useState, useEffect, useCallback, memo } from "react"
 import { Helmet } from "react-helmet-async"
 import { Github, Linkedin, Mail, ExternalLink, Instagram, Sparkles } from "lucide-react"
 import AOS from 'aos'
 import 'aos/dist/aos.css'
+
+const TechScene3D = lazy(() => import("../components/TechScene3D"));
 
 const StatusBadge = memo(() => (
   <div className="inline-block animate-float lg:mx-0" data-aos="zoom-in" data-aos-delay="400">
@@ -24,7 +26,7 @@ const MainTitle = memo(() => (
       <span className="relative inline-block">
         <span className="absolute -inset-2 bg-gradient-to-r from-[#6366f1] to-[#a855f7] blur-2xl opacity-20"></span>
         <span className="relative bg-gradient-to-r from-white via-blue-100 to-purple-200 bg-clip-text text-transparent">
-          Frontend
+          Software
         </span>
       </span>
       <br />
@@ -76,12 +78,12 @@ const SocialLink = memo(({ icon: Icon, link, label }) => (
 const TYPING_SPEED = 100;
 const ERASING_SPEED = 50;
 const PAUSE_DURATION = 2000;
-const WORDS = ["Network & Telecom Student", "Tech Enthusiast"];
-const TECH_STACK = ["React", "Javascript", "Node.js", "Tailwind"];
+const WORDS = ["Digital Systems Specialist", "Computer Science Student"];
+const TECH_STACK = ["Front-End", "Back-End", "DevOps", "Digital Services"];
 const SOCIAL_LINKS = [
-  { icon: Github, link: "https://github.com/EkiZR", label: "GitHub Profile" },
-  { icon: Linkedin, link: "https://www.linkedin.com/in/ekizr/", label: "LinkedIn Profile" },
-  { icon: Instagram, link: "https://www.instagram.com/ekizr_/?hl=id", label: "Instagram Profile" }
+  { icon: Github, link: "https://github.com/agegnehuy", label: "GitHub Profile" },
+  { icon: Linkedin, link: "https://www.linkedin.com/in/agegnehu-yelib-tesfa-036129316/", label: "LinkedIn Profile" },
+  { icon: Instagram, link: "https://www.instagram.com/agihh_hyel?stkn=MWFmbzd5Z3B6M2s4Mg==", label: "Instagram Profile" }
 ];
 
 const Home = () => {
@@ -90,7 +92,6 @@ const Home = () => {
   const [wordIndex, setWordIndex] = useState(0)
   const [charIndex, setCharIndex] = useState(0)
   const [isLoaded, setIsLoaded] = useState(false)
-  const [isHovering, setIsHovering] = useState(false)
 
   useEffect(() => {
     const initAOS = () => {
@@ -140,25 +141,25 @@ const Home = () => {
   return (
     <>
       <Helmet>
-        <title>Eki Zulfar Rachman — Frontend Web Developer</title>
-        <meta name="description" content="Website resmi Eki Zulfar Rachman, Front-End Web Developer. Saya berfokus pada penciptaan pengalaman digital yang menarik dan selalu berupaya memberikan solusi terbaik dalam setiap proyek yang saya kerjakan." />
+        <title>Agegnehu Yelib Tesfa — Software Developer</title>
+        <meta name="description" content="The official portfolio of Agegnehu Yelib Tesfa, an Ethiopian software developer and digital systems specialist based in Addis Ababa." />
      <meta name="robots" content="index, follow" />
-        <link rel="canonical" href="https://ekizr.com" />
-        <meta property="og:title" content="Eki Zulfar Rachman — Frontend Web Developer" />
-     <meta property="og:description" content="Website resmi dan portofolio Eki Zulfar Rachman, Front-End Web Developer." />
-        <meta property="og:url" content="https://ekizr.com" />
+        <link rel="canonical" href="https://agegnehuy.com" />
+        <meta property="og:title" content="Agegnehu Yelib Tesfa — Software Developer" />
+     <meta property="og:description" content="The official website and portfolio of Agegnehu Yelib Tesfa, Software Developer and Digital Systems Specialist." />
+        <meta property="og:url" content="https://agegnehuy.com" />
         <meta property="og:type" content="website" />
         <script type="application/ld+json">{`
           {
             "@context": "https://schema.org",
             "@type": "Person",
-            "name": "Eki Zulfar Rachman",
-            "jobTitle": "Frontend Developer",
-            "url": "https://ekizr.com",
+            "name": "Agegnehu Yelib Tesfa",
+            "jobTitle": "Junior Software and Digital Service Specialist",
+            "url": "https://agegnehuy.com",
             "sameAs": [
-              "https://github.com/EkiZR",
-              "https://www.linkedin.com/in/ekizr/",
-              "https://www.instagram.com/ekizr_/"
+              "https://github.com/agegnehuy",
+              "https://www.linkedin.com/in/agegnehu-yelib-tesfa-036129316/",
+              "https://www.instagram.com/agihh_hyel?stkn=MWFmbzd5Z3B6M2s4Mg=="
             ]
           }
         `}</script>
@@ -188,7 +189,7 @@ const Home = () => {
                   <p className="text-base md:text-lg text-gray-400 max-w-xl leading-relaxed font-light"
                     data-aos="fade-up"
                     data-aos-delay="1000">
-                    Menciptakan Website Yang Inovatif, Fungsional, dan User-Friendly untuk Solusi Digital.
+                    Building meaningful digital solutions across front-end, back-end, and DevOps.
                   </p>
 
                   {/* Tech Stack */}
@@ -213,40 +214,15 @@ const Home = () => {
                 </div>
               </div>
 
-              {/* Right Column - WebM Video */}
+              {/* Right Column - 3D Tech Hero */}
               <div className="w-full py-0 md:py-[10%] sm:py-0 lg:w-1/2 h-[260px] sm:h-[400px] lg:h-[600px] xl:h-[750px] relative flex items-center justify-center order-2 lg:order-2  mt-5 sm:mt-0"
-                onMouseEnter={() => setIsHovering(true)}
-                onMouseLeave={() => setIsHovering(false)}
                 data-aos="fade-left"
                 data-aos-delay="600">
-                <div className="relative w-full opacity-90">
-                  <div className={`absolute inset-0 bg-gradient-to-r from-[#6366f1]/10 to-[#a855f7]/10 rounded-3xl blur-3xl transition-all duration-700 ease-in-out ${
-                    isHovering ? "opacity-50 scale-105" : "opacity-20 scale-100"
-                  }`}>
-                  </div>
-
-                  <div className={`relative lg:left-12 z-10 w-full opacity-90 transform transition-transform duration-500 ${
-                    isHovering ? "scale-105" : "scale-100"
-                  }`}>
-                    <img
-                      src="Animation1.gif"
-                      alt="Developer Animation"
-                      className={`w-full h-full object-contain transition-all duration-500 ${
-                        isHovering 
-                          ? "scale-[95%] sm:scale-[90%] md:scale-[90%] lg:scale-[90%] rotate-2" 
-                          : "scale-[90%] sm:scale-[80%] md:scale-[80%] lg:scale-[80%]"
-                      }`}
-                    />
-                  </div>
-
-                  <div className={`absolute inset-0 pointer-events-none transition-all duration-700 ${
-                    isHovering ? "opacity-50" : "opacity-20"
-                  }`}>
-                    <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-gradient-to-br from-indigo-500/10 to-purple-500/10 blur-3xl animate-[pulse_6s_cubic-bezier(0.4,0,0.6,1)_infinite] transition-all duration-700 ${
-                      isHovering ? "scale-110" : "scale-100"
-                    }`}>
-                    </div>
-                  </div>
+                <div className="relative h-full w-full lg:left-8">
+                  <div className="pointer-events-none absolute inset-[12%] rounded-full bg-gradient-to-br from-cyan-400/10 via-indigo-500/10 to-purple-500/15 blur-3xl" />
+                  <Suspense fallback={<div className="h-full w-full animate-pulse rounded-3xl bg-indigo-500/5" aria-label="Loading interactive 3D scene" />}>
+                    <TechScene3D />
+                  </Suspense>
                 </div>
               </div>
             </div>

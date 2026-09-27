@@ -1,9 +1,9 @@
-import React from "react";
+
 import { Link } from "react-router-dom";
 import { ExternalLink, ArrowRight } from "lucide-react";
 import { toSlug } from "../utils/slug";
 
-const CardProject = ({ Img, Title, Description, Link: ProjectLink, id }) => {
+const CardProject = ({ Img, Title, Description, Link: ProjectLink, id, Slug, Category, Role, Challenge, Outcome }) => {
   const handleLiveDemo = (e) => {
     if (!ProjectLink) {
       console.log("ProjectLink kosong");
@@ -36,11 +36,14 @@ const CardProject = ({ Img, Title, Description, Link: ProjectLink, id }) => {
 
           <div className="mt-4 space-y-3">
             <h3 className="text-xl font-semibold bg-gradient-to-r from-blue-200 via-purple-200 to-pink-200 bg-clip-text text-transparent">
+              {(Category || Role) && <p className="text-xs uppercase tracking-wider text-indigo-300">{[Category, Role].filter(Boolean).join(" · ")}</p>}
               {Title}
             </h3>
 
             <p className="text-gray-300/80 text-sm leading-relaxed line-clamp-2">
               {Description}
+              {Challenge && <span className="block mt-2 text-xs text-slate-400"><strong className="text-slate-300">Challenge:</strong> {Challenge}</span>}
+              {Outcome && <span className="block mt-1 text-xs text-slate-400"><strong className="text-slate-300">Result:</strong> {Outcome}</span>}
             </p>
 
             <div className="pt-4 flex items-center justify-between">
@@ -63,7 +66,7 @@ const CardProject = ({ Img, Title, Description, Link: ProjectLink, id }) => {
 
               {id ? (
                 <Link
-                  to={`/project/${toSlug(Title)}`}
+                  to={`/project/${Slug || toSlug(Title)}`}
                   onClick={handleDetails}
                   className="inline-flex items-center space-x-2 px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-white/90 transition-all duration-200 hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-purple-500/50"
                 >

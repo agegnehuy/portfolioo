@@ -46,6 +46,7 @@
     "styled-components": "^6.1.13",
     "sweetalert2": "^11.15.0",
     "tailwind-merge": "^2.5.5",
+    "three": "^0.186.1",
     "typewriter-effect": "^2.21.0"
   },
   "devDependencies": {

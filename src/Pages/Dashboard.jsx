@@ -4,12 +4,15 @@ import { supabase } from '../supabase'
 import Projects from './dashboard/Projects'
 import Certificates from './dashboard/Certificates'
 import Comments from './dashboard/Comments'
-import { FolderGit2, Award, MessageSquare, LogOut, LayoutDashboard, Menu } from 'lucide-react'
+import Overview from './dashboard/Overview'
+import { AboutContentManager, ContentManager } from './dashboard/ContentManagers'
+import { FolderGit2, Award, MessageSquare, LogOut, LayoutDashboard, Menu, BriefcaseBusiness, Newspaper, Quote, FileText } from 'lucide-react'
 
 const NAV_ITEMS = [
-  { to: 'projects', label: 'Projects', icon: FolderGit2 },
+  { to: 'overview', label: 'Overview', icon: LayoutDashboard },  { to: 'projects', label: 'Projects', icon: FolderGit2 },
   { to: 'certificates', label: 'Certificates', icon: Award },
   { to: 'comments', label: 'Comments', icon: MessageSquare },
+  { to: 'services', label: 'Services', icon: BriefcaseBusiness },  { to: 'articles', label: 'Articles', icon: Newspaper },  { to: 'testimonials', label: 'Testimonials', icon: Quote },  { to: 'site-content', label: 'Edit About Page', icon: FileText },
 ]
 
 export default function Dashboard() {
@@ -45,7 +48,7 @@ export default function Dashboard() {
       </div>
 
       {/* Nav */}
-      <nav className="flex flex-col gap-1 flex-1 min-h-0">
+      <nav className="flex flex-col gap-1 flex-1 min-h-0 overflow-y-auto">
         <p className="text-[10px] text-gray-600 uppercase tracking-widest px-3 mb-2 shrink-0">Menu</p>
         {NAV_ITEMS.map(({ to, label, icon: Icon }) => {
           const active = location.pathname.includes(to)
@@ -80,7 +83,7 @@ export default function Dashboard() {
   )
 
   return (
-    // Kunci: TIDAK pakai overflow-hidden di sini supaya scrollbar main bisa diklik
+    // Do not use overflow-hidden here so the main scrollbar remains clickable
     <div className="flex text-white" style={{ height: '100dvh' }}>
       {/* Mobile overlay */}
       {sidebarOpen && (
@@ -120,13 +123,15 @@ export default function Dashboard() {
           <span className="text-sm font-medium text-white">Dashboard</span>
         </div>
 
-        {/* Hanya main yang overflow-y-auto — scrollbar bisa diklik normal */}
+        {/* Only the main element scrolls vertically so its scrollbar works normally */}
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
           <Routes>
-            <Route index element={<Navigate to="projects" replace />} />
+            <Route index element={<Navigate to="overview" replace />} />
+            <Route path="overview" element={<Overview />} />
             <Route path="projects" element={<Projects />} />
             <Route path="certificates" element={<Certificates />} />
             <Route path="comments" element={<Comments />} />
+            <Route path="services" element={<ContentManager table="services" />} />            <Route path="articles" element={<ContentManager table="articles" />} />            <Route path="testimonials" element={<ContentManager table="testimonials" />} />            <Route path="site-content" element={<AboutContentManager />} />
           </Routes>
         </main>
       </div>

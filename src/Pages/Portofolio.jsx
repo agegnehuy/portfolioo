@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
 
 import { supabase } from "../supabase"; 
 
@@ -102,7 +102,7 @@ function a11yProps(index) {
   };
 }
 
-// techStacks tetap sama
+// Keep the tech stack list unchanged
 const techStacks = [
   { icon: "html.svg", language: "HTML" },
   { icon: "css.svg", language: "CSS" },
@@ -125,6 +125,7 @@ export default function FullWidthTabs() {
   const [certificates, setCertificates] = useState([]);
   const [showAllProjects, setShowAllProjects] = useState(false);
   const [showAllCertificates, setShowAllCertificates] = useState(false);
+  const [projectFilter, setProjectFilter] = useState("All");
   const isMobile = window.innerWidth < 768;
   const initialItems = isMobile ? 4 : 6;
 
@@ -133,28 +134,40 @@ export default function FullWidthTabs() {
       once: false,
     });
   }, []);
+  useEffect(() => {
+    const handlePortfolioTabChange = (event) => {
+      const requestedTab = Number(event.detail);
+      if (requestedTab >= 0 && requestedTab <= 2) {
+        setValue(requestedTab);
+      }
+    };
+
+    window.addEventListener("portfolioTabChange", handlePortfolioTabChange);
+    return () => window.removeEventListener("portfolioTabChange", handlePortfolioTabChange);
+  }, []);
+
 
 
   const fetchData = useCallback(async () => {
     try {
-      // Mengambil data dari Supabase secara paralel
+      // Fetch project and certificate data from Supabase in parallel
       const [projectsResponse, certificatesResponse] = await Promise.all([
-        supabase.from("projects").select("*").order('id', { ascending: false }),
+        supabase.from("projects").select("*").eq("is_published", true).order("order_index", { ascending: true }),
         supabase.from("certificates").select("*").order('id', { ascending: false }), 
       ]);
 
-      // Error handling untuk setiap request
+      // Handle errors for each request
       if (projectsResponse.error) throw projectsResponse.error;
       if (certificatesResponse.error) throw certificatesResponse.error;
 
-      // Supabase mengembalikan data dalam properti 'data'
+      // Supabase returns results in the 'data' property
       const projectData = projectsResponse.data || [];
       const certificateData = certificatesResponse.data || [];
 
       setProjects(projectData);
       setCertificates(certificateData);
 
-      // Store in localStorage (fungsionalitas ini tetap dipertahankan)
+      // Store the results in localStorage to preserve the existing cache behavior
       localStorage.setItem("projects", JSON.stringify(projectData));
       localStorage.setItem("certificates", JSON.stringify(certificateData));
       
@@ -168,7 +181,7 @@ export default function FullWidthTabs() {
 
 
   useEffect(() => {
-    // Coba ambil dari localStorage dulu untuk laod lebih cepat
+    // Load cached data from localStorage first for a faster initial render
     const cachedProjects = localStorage.getItem('projects');
     const cachedCertificates = localStorage.getItem('certificates');
 
@@ -177,7 +190,7 @@ export default function FullWidthTabs() {
         setCertificates(JSON.parse(cachedCertificates));
     }
     
-    fetchData(); // Tetap panggil fetchData untuk sinkronisasi data terbaru
+    fetchData(); // Fetch again to synchronize the latest data
   }, [fetchData]);
 
   const handleChange = (event, newValue) => {
@@ -192,10 +205,12 @@ export default function FullWidthTabs() {
     }
   }, []);
 
-  const displayedProjects = showAllProjects ? projects : projects.slice(0, initialItems);
+  const projectCategories = ["All", ...new Set(projects.map((project) => project.category).filter(Boolean))];
+  const filteredProjects = projectFilter === "All" ? projects : projects.filter((project) => project.category === projectFilter);
+  const displayedProjects = showAllProjects ? filteredProjects : filteredProjects.slice(0, initialItems);
   const displayedCertificates = showAllCertificates ? certificates : certificates.slice(0, initialItems);
 
-  // Sisa dari komponen (return statement) tidak ada perubahan
+  // Render the portfolio sections
   return (
     <div className="md:px-[10%] px-[5%] w-full sm:mt-0 mt-[3rem] bg-[#030014] overflow-hidden" id="Portofolio">
       {/* Header section - unchanged */}
@@ -310,6 +325,7 @@ export default function FullWidthTabs() {
           onChangeIndex={setValue}
         >
           <TabPanel value={value} index={0} dir={theme.direction}>
+            <div className="flex flex-wrap gap-2 mb-5" aria-label="Project categories">{projectCategories.map((category) => <button key={category} type="button" onClick={() => setProjectFilter(category)} className={`min-h-10 px-4 rounded-xl border text-sm ${projectFilter === category ? "border-indigo-400 bg-indigo-500/20 text-white" : "border-white/10 text-slate-400"}`}>{category}</button>)}</div>
             <div className="container mx-auto flex justify-center items-center overflow-hidden">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 2xl:grid-cols-3 gap-5">
                 {displayedProjects.map((project, index) => (
@@ -321,6 +337,11 @@ export default function FullWidthTabs() {
                     <CardProject
                       Img={project.Img}
                       Title={project.Title}
+                      Category={project.category}
+                      Role={project.project_role}
+                      Challenge={project.challenge}
+                      Outcome={project.outcome}
+                      Slug={project.slug}
                       Description={project.Description}
                       Link={project.Link}
                       id={project.id}
