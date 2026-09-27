@@ -35,8 +35,8 @@ function ScrollManager() {
 const SiteLayout = ({ children }) => <><Navbar />{children}<Footer /></>;
 
 const LandingPage = ({ showWelcome, setShowWelcome }) => <>
-  <AnimatePresence mode="wait">{showWelcome && <Suspense fallback={null}><WelcomeScreen onLoadingComplete={() => setShowWelcome(false)} /></Suspense>}</AnimatePresence>
-  {!showWelcome && <SiteLayout><main id="main-content"><Home /><About /><HomeAdditions /><TestimonialsSection /><Suspense fallback={<div className="h-20" />}><Portofolio /><ContactPage /></Suspense></main></SiteLayout>}
+  <SiteLayout><main id="main-content"><Home /><About /><HomeAdditions /><TestimonialsSection /><Suspense fallback={<div className="h-20" aria-label="Loading portfolio content" />}><Portofolio /><ContactPage /></Suspense></main></SiteLayout>
+  <AnimatePresence>{showWelcome && <Suspense fallback={null}><WelcomeScreen onLoadingComplete={() => setShowWelcome(false)} /></Suspense>}</AnimatePresence>
 </>;
 
 const ProjectPageLayout = () => <SiteLayout><main id="main-content"><Suspense fallback={<div className="min-h-screen" />}><ProjectDetails /></Suspense></main></SiteLayout>;
