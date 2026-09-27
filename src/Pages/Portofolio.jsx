@@ -71,6 +71,11 @@ const ToggleButton = ({ onClick, isShowingMore }) => (
 );
 
 
+ToggleButton.propTypes = {
+  onClick: PropTypes.func.isRequired,
+  isShowingMore: PropTypes.bool.isRequired,
+};
+
 function TabPanel({ children, value, index, ...other }) {
   return (
     <div
@@ -319,11 +324,7 @@ export default function FullWidthTabs() {
           </Tabs>
         </AppBar>
 
-        <SwipeableViews
-          axis={theme.direction === "rtl" ? "x-reverse" : "x"}
-          index={value}
-          onChangeIndex={setValue}
-        >
+        <div className="mt-6">
           <TabPanel value={value} index={0} dir={theme.direction}>
             <div className="flex flex-wrap gap-2 mb-5" aria-label="Project categories">{projectCategories.map((category) => <button key={category} type="button" onClick={() => setProjectFilter(category)} className={`min-h-10 px-4 rounded-xl border text-sm ${projectFilter === category ? "border-indigo-400 bg-indigo-500/20 text-white" : "border-white/10 text-slate-400"}`}>{category}</button>)}</div>
             <div className="container mx-auto flex justify-center items-center overflow-hidden">
@@ -399,7 +400,7 @@ export default function FullWidthTabs() {
               </div>
             </div>
           </TabPanel>
-        </SwipeableViews>
+        </div>
       </Box>
     </div>
   );
