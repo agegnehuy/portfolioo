@@ -190,6 +190,7 @@ const ProjectForm = ({
   onCancel,
   submitLabel = "Save Project",
   uploading,
+  feedback,
 }) => {
   const [form, setForm] = useState({
     Title: initial?.Title || "",
@@ -239,6 +240,16 @@ const ProjectForm = ({
       }}
       className="p-5 sm:p-6 space-y-4"
     >
+      {feedback?.type === "error" && (
+        <div
+          role="alert"
+          aria-live="assertive"
+          className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200"
+        >
+          {feedback.message}
+        </div>
+      )}
+
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="sm:col-span-2">
           <InputField
@@ -378,13 +389,26 @@ export default function Projects() {
   const [showCreate, setShowCreate] = useState(false);
   const [editProject, setEditProject] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [feedback, setFeedback] = useState(null);
+
+  const showError = (action, error) => {
+    console.error(`Unable to ${action}:`, error);
+    setFeedback({
+      type: "error",
+      message: error?.message || `Unable to ${action}. Please try again.`,
+    });
+  };
 
   const fetchProjects = async () => {
     setLoading(true);
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("projects")
       .select("*")
       .order("created_at", { ascending: false });
+
+    if (error) {
+      showError("load projects", error);
+    }
     setProjects(data || []);
     setLoading(false);
   };
@@ -394,8 +418,14 @@ export default function Projects() {
   }, []);
 
   const uploadImage = async (f) => {
-    const fileName = `${Date.now()}-${f.name}`;
-    await supabase.storage.from("project-images").upload(fileName, f);
+    const safeName = f.name.replace(/[^a-zA-Z0-9._-]/g, "-");
+    const fileName = `${crypto.randomUUID()}-${safeName}`;
+    const { error: uploadError } = await supabase.storage
+      .from("project-images")
+      .upload(fileName, f);
+
+    if (uploadError) throw uploadError;
+
     const { data } = supabase.storage
       .from("project-images")
       .getPublicUrl(fileName);
@@ -404,31 +434,60 @@ export default function Projects() {
 
   const handleCreate = async (form, file) => {
     setUploading(true);
-    let imgUrl = "";
-    if (file) imgUrl = await uploadImage(file);
-    await supabase.from("projects").insert(projectPayload(form, imgUrl));
-    setShowCreate(false);
-    setUploading(false);
-    fetchProjects();
+    setFeedback(null);
+
+    try {
+      const imgUrl = file ? await uploadImage(file) : "";
+      const { error } = await supabase
+        .from("projects")
+        .insert(projectPayload(form, imgUrl));
+
+      if (error) throw error;
+
+      setShowCreate(false);
+      setFeedback({ type: "success", message: "Project added successfully." });
+      await fetchProjects();
+    } catch (error) {
+      showError("add the project", error);
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleEdit = async (form, file) => {
     setUploading(true);
-    let imgUrl = editProject.Img || "";
-    if (file) imgUrl = await uploadImage(file);
-    await supabase
-      .from("projects")
-      .update(projectPayload(form, imgUrl))
-      .eq("id", editProject.id);
-    setEditProject(null);
-    setUploading(false);
-    fetchProjects();
+    setFeedback(null);
+
+    try {
+      let imgUrl = editProject.Img || "";
+      if (file) imgUrl = await uploadImage(file);
+      const { error } = await supabase
+        .from("projects")
+        .update(projectPayload(form, imgUrl))
+        .eq("id", editProject.id);
+
+      if (error) throw error;
+
+      setEditProject(null);
+      setFeedback({ type: "success", message: "Project updated successfully." });
+      await fetchProjects();
+    } catch (error) {
+      showError("update the project", error);
+    } finally {
+      setUploading(false);
+    }
   };
 
   const deleteProject = async (id) => {
     if (!confirm("Delete this project?")) return;
-    await supabase.from("projects").delete().eq("id", id);
-    fetchProjects();
+    setFeedback(null);
+    const { error } = await supabase.from("projects").delete().eq("id", id);
+    if (error) {
+      showError("delete the project", error);
+      return;
+    }
+    setFeedback({ type: "success", message: "Project deleted." });
+    await fetchProjects();
   };
 
   return (
@@ -464,6 +523,20 @@ export default function Projects() {
         </button>
       </div>
 
+      {feedback && !showCreate && !editProject && (
+        <div
+          role={feedback.type === "error" ? "alert" : "status"}
+          aria-live="polite"
+          className={`mb-6 rounded-xl border px-4 py-3 text-sm ${
+            feedback.type === "error"
+              ? "border-red-500/30 bg-red-500/10 text-red-200"
+              : "border-emerald-500/30 bg-emerald-500/10 text-emerald-200"
+          }`}
+        >
+          {feedback.message}
+        </div>
+      )}
+
       {/* Create Modal */}
       {showCreate && (
         <Modal title="Add New Project" onClose={() => setShowCreate(false)}>
@@ -472,6 +545,7 @@ export default function Projects() {
             onCancel={() => setShowCreate(false)}
             submitLabel="Save Project"
             uploading={uploading}
+            feedback={feedback}
           />
         </Modal>
       )}
@@ -485,6 +559,7 @@ export default function Projects() {
             onCancel={() => setEditProject(null)}
             submitLabel="Update Project"
             uploading={uploading}
+            feedback={feedback}
           />
         </Modal>
       )}
