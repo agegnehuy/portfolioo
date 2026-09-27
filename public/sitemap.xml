@@ -1,19 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>https://www.eki.my.id/#Home</loc>
-    <priority>1.0</priority>
-  </url>
-  <url>
-    <loc>https://www.eki.my.id/#About</loc>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>https://www.eki.my.id/#Portofolio</loc>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://www.eki.my.id/#Contact</loc>
-    <priority>0.8</priority>
-  </url>
+  <url><loc>https://agegnehuy.com/</loc><priority>1.0</priority></url>
+  <url><loc>https://agegnehuy.com/services</loc><priority>0.9</priority></url>
+  <url><loc>https://agegnehuy.com/services/frontend-development</loc><priority>0.8</priority></url>
+  <url><loc>https://agegnehuy.com/services/backend-development</loc><priority>0.8</priority></url>
+  <url><loc>https://agegnehuy.com/services/devops-digital-services</loc><priority>0.8</priority></url>
+  <url><loc>https://agegnehuy.com/process</loc><priority>0.8</priority></url>
+  <url><loc>https://agegnehuy.com/insights</loc><priority>0.9</priority></url>
+  <url><loc>https://agegnehuy.com/insights/building-a-portfolio-as-a-working-system</loc><priority>0.7</priority></url>
+  <url><loc>https://agegnehuy.com/insights/what-i-learned-connecting-react-and-supabase</loc><priority>0.7</priority></url>
+  <url><loc>https://agegnehuy.com/faq</loc><priority>0.7</priority></url>
+  <url><loc>https://agegnehuy.com/privacy</loc><priority>0.4</priority></url>
+  <url><loc>https://agegnehuy.com/terms</loc><priority>0.4</priority></url>
 </urlset>

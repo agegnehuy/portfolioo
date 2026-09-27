@@ -1,6 +1,7 @@
-import React, { useEffect, useState, memo, useMemo } from "react"
-import { FileText, Code, Award, Globe, ArrowUpRight, Sparkles, UserCheck } from "lucide-react"
+import { useEffect, useState, memo, useMemo } from "react"
+import { FileText, Code, Award, ArrowUpRight, Sparkles, UserCheck } from "lucide-react"
 import AOS from 'aos'
+import { supabase } from "../supabase";
 import 'aos/dist/aos.css'
 
 // Memoized Components
@@ -21,7 +22,7 @@ const Header = memo(() => (
       data-aos-duration="800"
     >
       <Sparkles className="w-5 h-5 text-purple-400" />
-      Transforming ideas into digital experiences
+      Creating technology that opens opportunities
       <Sparkles className="w-5 h-5 text-purple-400" />
     </p>
   </div>
@@ -50,10 +51,13 @@ const ProfileImage = memo(() => (
           <div className="absolute inset-0 bg-gradient-to-t from-purple-500/20 via-transparent to-blue-500/20 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-700 hidden sm:block" />
           
           <img
-            src="/Photo.jpeg"
-            alt="Profile"
-            className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110 group-hover:rotate-2"
+            src="/beloved-profile.webp"
+            alt="Agegnehu Yelib Tesfa"
+            width="320"
+            height="320"
+            className="w-full h-full object-cover object-[50%_68%] transition-all duration-700 group-hover:scale-110 group-hover:rotate-2"
             loading="lazy"
+            decoding="async"
           />
 
           {/* Advanced hover effects - desktop only */}
@@ -68,9 +72,14 @@ const ProfileImage = memo(() => (
   </div>
 ));
 
-const StatCard = memo(({ icon: Icon, color, value, label, description, animation }) => (
-  <div data-aos={animation} data-aos-duration={1300} className="relative group">
-    <div className="relative z-10 bg-gray-900/50 backdrop-blur-lg rounded-2xl p-6 border border-white/10 overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-2xl h-full flex flex-col justify-between">
+const StatCard = memo(({ icon: Icon, color, value, label, description, animation, tabIndex, onActivate }) => (
+  <div data-aos={animation} data-aos-duration={1300} className="relative group h-full">
+    <button
+      type="button"
+      onClick={() => onActivate(tabIndex)}
+      aria-label={`View ${label}`}
+      className="relative z-10 w-full text-left bg-gray-900/50 backdrop-blur-lg rounded-2xl p-6 border border-white/10 overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a855f7] focus-visible:ring-offset-2 focus-visible:ring-offset-[#030014] h-full flex flex-col justify-between"
+    >
       <div className={`absolute -z-10 inset-0 bg-gradient-to-br ${color} opacity-10 group-hover:opacity-20 transition-opacity duration-300`}></div>
       
       <div className="flex items-center justify-between mb-4">
@@ -108,7 +117,7 @@ const StatCard = memo(({ icon: Icon, color, value, label, description, animation
           <ArrowUpRight className="w-4 h-4 text-white/50 group-hover:text-white transition-colors" />
         </div>
       </div>
-    </div>
+    </button>
   </div>
 ));
 
@@ -117,23 +126,23 @@ const AboutPage = () => {
   const [stats, setStats] = useState({
     totalProjects: 0,
     totalCertificates: 0,
-    YearExperience: 0,
   });
+  const [siteContent, setSiteContent] = useState({});
+
+  useEffect(() => {
+    supabase.from("site_content").select("key,value").then(({ data }) => {
+      if (data) setSiteContent(Object.fromEntries(data.map((item) => [item.key, item.value])));
+    });
+  }, []);
 
   useEffect(() => {
     const updateStats = () => {
       const storedProjects = JSON.parse(localStorage.getItem("projects") || "[]");
       const storedCertificates = JSON.parse(localStorage.getItem("certificates") || "[]");
       
-      const startDate = new Date("2021-11-06");
-      const today = new Date();
-      const experience = today.getFullYear() - startDate.getFullYear() -
-        (today < new Date(today.getFullYear(), startDate.getMonth(), startDate.getDate()) ? 1 : 0);
-
       setStats({
         totalProjects: storedProjects.length,
-        totalCertificates: storedCertificates.length,
-        YearExperience: experience
+        totalCertificates: storedCertificates.length
       });
     };
 
@@ -148,7 +157,7 @@ const AboutPage = () => {
     };
   }, []);
 
-  const { totalProjects, totalCertificates, YearExperience } = stats;
+  const { totalProjects, totalCertificates } = stats;
 
   // Optimized AOS initialization
   useEffect(() => {
@@ -183,6 +192,7 @@ const AboutPage = () => {
       label: "Total Projects",
       description: "Innovative web solutions crafted",
       animation: "fade-right",
+      tabIndex: 0,
     },
     {
       icon: Award,
@@ -191,16 +201,29 @@ const AboutPage = () => {
       label: "Certificates",
       description: "Professional skills validated",
       animation: "fade-up",
+      tabIndex: 1,
     },
     {
-      icon: Globe,
+      icon: UserCheck,
       color: "from-[#6366f1] to-[#a855f7]",
-      value: YearExperience,
-      label: "Years of Experience",
-      description: "Continuous learning journey",
+      value: "3",
+      label: "Core Areas",
+      description: "Front-end, back-end, and DevOps",
       animation: "fade-left",
+      tabIndex: 2,
     },
-  ], [totalProjects, totalCertificates, YearExperience]);
+  ], [totalProjects, totalCertificates]);
+
+  const handleStatClick = (tabIndex) => {
+    window.dispatchEvent(new CustomEvent("portfolioTabChange", { detail: tabIndex }));
+
+    const portfolioSection = document.querySelector("#Portofolio");
+    if (portfolioSection) {
+      const fixedHeaderOffset = 80;
+      const top = portfolioSection.getBoundingClientRect().top + window.scrollY - fixedHeaderOffset;
+      window.scrollTo({ top, behavior: "smooth" });
+    }
+  };
 
   return (
     <div
@@ -229,7 +252,7 @@ const AboutPage = () => {
                 data-aos-duration="1300"
                 itemProp="name"
               >
-                Eki Zulfar Rachman
+                Agegnehu Yelib Tesfa
               </span>
             </h2>
             
@@ -238,8 +261,7 @@ const AboutPage = () => {
               data-aos="fade-right"
               data-aos-duration="1500"
             >
-        Saya adalah mahasiswa Teknik Informatika yang berfokus pada pengembangan Front-End. 
-Saya berfokus pada penciptaan pengalaman digital yang menarik dan selalu berupaya memberikan solusi terbaik dalam setiap proyek yang saya kerjakan.
+{siteContent.about_bio || "I am a software developer and digital systems specialist passionate about building practical, user-focused solutions. I enjoy working across front-end development, back-end development, and DevOps while continuously learning and exploring new technologies."}
                   </p>
 
                {/* Quote Section */}
@@ -260,12 +282,17 @@ Saya berfokus pada penciptaan pengalaman digital yang menarik dan selalu berupay
         </div>
         
         <blockquote className="text-gray-300 text-center lg:text-left italic font-medium text-sm relative z-10 pl-6">
-          "Leveraging AI as a professional tool, not a replacement."
+{siteContent.about_quote || "Using technology to create opportunities and positively impact others."}
         </blockquote>
       </div>
 
             <div className="flex flex-col lg:flex-row items-center lg:items-start gap-4 lg:gap-4 lg:px-0 w-full">
-              <a href="https://drive.google.com/drive/folders/1BOm51Grsabb3zj6Xk27K-iRwI1zITcpo" className="w-full lg:w-auto">
+              <a
+                href="/Agegnehu-Yelib-Tesfa-CV.pdf"
+                download="Agegnehu-Yelib-Tesfa-CV.pdf"
+                className="w-full lg:w-auto"
+                aria-label="Download Agegnehu Yelib Tesfa CV"
+              >
               <button 
                 data-aos="fade-up"
                 data-aos-duration="800"
@@ -289,16 +316,14 @@ Saya berfokus pada penciptaan pengalaman digital yang menarik dan selalu berupay
           <ProfileImage />
         </div>
 
-        <a href="#Portofolio">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-16 cursor-pointer">
-            {statsData.map((stat) => (
-              <StatCard key={stat.label} {...stat} />
-            ))}
-          </div>
-        </a>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-16">
+          {statsData.map((stat) => (
+            <StatCard key={stat.label} {...stat} onActivate={handleStatClick} />
+          ))}
+        </div>
       </div>
 
-      <style jsx>{`
+      <style>{`
         @keyframes float {
           0%, 100% { transform: translateY(0); }
           50% { transform: translateY(-20px); }

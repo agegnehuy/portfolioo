@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
+import PropTypes from "prop-types";
 import { supabase } from "../../supabase";
 import {
   MessageSquare,
@@ -10,6 +11,9 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
+  CheckCircle2,
+  EyeOff,
+  Clock3,
 } from "lucide-react";
 
 const PAGE_SIZE = 10;
@@ -22,6 +26,11 @@ const Card = ({ children, className = "" }) => (
     </div>
   </div>
 );
+
+Card.propTypes = {
+  children: PropTypes.node.isRequired,
+  className: PropTypes.string,
+};
 
 export default function Comments() {
   const [comments, setComments] = useState([]);
@@ -64,7 +73,23 @@ export default function Comments() {
     fetchComments();
   };
 
+  const setApproval = async (comment, approved) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    await supabase
+      .from("portfolio_comments")
+      .update({
+        is_approved: approved,
+        approved_at: approved ? new Date().toISOString() : null,
+        approved_by: approved ? user?.id || null : null,
+        is_pinned: approved ? comment.is_pinned : false,
+      })
+      .eq("id", comment.id);
+    fetchComments();
+  };
+
   const pinnedCount = comments.filter((c) => c.is_pinned).length;
+  const pendingCount = comments.filter((c) => !c.is_approved).length;
+  const approvedCount = comments.filter((c) => c.is_approved).length;
 
   const formatDate = (dateStr) => {
     if (!dateStr) return "";
@@ -77,8 +102,10 @@ export default function Comments() {
 
   // Filter + search
   const filtered = useMemo(() => {
-    let result =
-      filter === "pinned" ? comments.filter((c) => c.is_pinned) : comments;
+    let result = comments;
+    if (filter === "pending") result = comments.filter((c) => !c.is_approved);
+    if (filter === "approved") result = comments.filter((c) => c.is_approved);
+    if (filter === "pinned") result = comments.filter((c) => c.is_pinned && c.is_approved);
     const q = search.trim().toLowerCase();
     if (q) {
       result = result.filter(
@@ -110,7 +137,7 @@ export default function Comments() {
               Comments
             </h1>
             <p className="text-gray-500 text-xs">
-              {comments.length} total · {pinnedCount} pinned
+              {pendingCount} awaiting review · {approvedCount} published
             </p>
           </div>
         </div>
@@ -119,6 +146,8 @@ export default function Comments() {
         <div className="flex gap-1 p-1 rounded-xl bg-white/5 border border-white/10">
           {[
             { value: "all", label: "All", count: comments.length },
+            { value: "pending", label: "Pending", count: pendingCount },
+            { value: "approved", label: "Published", count: approvedCount },
             { value: "pinned", label: "Pinned", count: pinnedCount },
           ].map((tab) => (
             <button
@@ -146,15 +175,12 @@ export default function Comments() {
       </div>
 
       {/* Stats row */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
           { label: "Total", value: comments.length, color: "text-indigo-400" },
+          { label: "Pending", value: pendingCount, color: "text-amber-300" },
+          { label: "Published", value: approvedCount, color: "text-emerald-300" },
           { label: "Pinned", value: pinnedCount, color: "text-purple-400" },
-          {
-            label: "Unpinned",
-            value: comments.length - pinnedCount,
-            color: "text-blue-400",
-          },
         ].map((stat) => (
           <Card key={stat.label}>
             <div className="p-3 sm:p-4">
@@ -190,8 +216,8 @@ export default function Comments() {
       {/* Result count when searching */}
       {search && (
         <p className="text-xs text-gray-500 -mt-3">
-          {filtered.length} result{filtered.length !== 1 ? "s" : ""} for "
-          {search}"
+          {filtered.length} result{filtered.length !== 1 ? "s" : ""} for &quot;
+          {search}&quot;
         </p>
       )}
 
@@ -209,6 +235,10 @@ export default function Comments() {
                 ? "No comments match your search."
                 : filter === "pinned"
                   ? "No pinned comments."
+                  : filter === "pending"
+                    ? "No comments are waiting for review."
+                    : filter === "approved"
+                      ? "No comments have been published yet."
                   : "No comments yet."}
             </p>
           </div>
@@ -251,6 +281,10 @@ export default function Comments() {
                           <Pin className="w-2.5 h-2.5" /> Pinned
                         </span>
                       )}
+                      <span className={`flex items-center gap-1 px-2 py-0.5 rounded-full border text-xs ${comment.is_approved ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-300" : "bg-amber-500/10 border-amber-500/20 text-amber-300"}`}>
+                        {comment.is_approved ? <CheckCircle2 className="w-3 h-3"/> : <Clock3 className="w-3 h-3"/>}
+                        {comment.is_approved ? "Published" : "Pending"}
+                      </span>
                       <span className="flex items-center gap-1 text-gray-600 text-xs ml-auto shrink-0">
                         <Calendar className="w-3 h-3" />
                         {formatDate(comment.created_at)}
@@ -265,9 +299,18 @@ export default function Comments() {
                   {/* Action buttons */}
                   <div className="flex items-center gap-1.5 shrink-0">
                     <button
+                      onClick={() => setApproval(comment, !comment.is_approved)}
+                      title={comment.is_approved ? "Hide comment" : "Approve comment"}
+                      className={`min-h-9 px-2.5 rounded-lg border inline-flex items-center gap-1.5 text-xs font-medium transition-colors duration-150 ${comment.is_approved ? "border-amber-500/25 text-amber-300 hover:bg-amber-500/10" : "border-emerald-500/25 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20"}`}
+                    >
+                      {comment.is_approved ? <EyeOff className="w-3.5 h-3.5"/> : <CheckCircle2 className="w-3.5 h-3.5"/>}
+                      <span className="hidden sm:inline">{comment.is_approved ? "Hide" : "Approve"}</span>
+                    </button>
+                    <button
                       onClick={() => pin(comment.id, !comment.is_pinned)}
+                      disabled={!comment.is_approved}
                       title={comment.is_pinned ? "Unpin" : "Pin"}
-                      className={`p-2 rounded-lg border transition-all duration-200 ${
+                      className={`p-2 rounded-lg border transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-30 ${
                         comment.is_pinned
                           ? "border-indigo-500/30 bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20"
                           : "border-white/10 text-gray-500 hover:text-indigo-400 hover:border-indigo-500/25"

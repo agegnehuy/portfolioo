@@ -1,12 +1,13 @@
-import React, { useState, useEffect, useRef, useCallback, memo } from 'react';
-import { createClient } from '@supabase/supabase-js';
+import { useState, useEffect, useRef, useCallback, memo } from 'react';
+import PropTypes from 'prop-types';
 import { MessageCircle, UserCircle2, Loader2, AlertCircle, Send, ImagePlus, X, Pin } from 'lucide-react';
 import AOS from "aos";
 import "aos/dist/aos.css";
 import { supabase } from '../supabase';
 
 
-const Comment = memo(({ comment, formatDate, index, isPinned = false }) => (
+const Comment = memo(function Comment({ comment, formatDate, isPinned = false }) {
+    return (
     <div 
         className={`px-4 pt-4 pb-2 rounded-xl border transition-all group hover:shadow-lg hover:-translate-y-0.5 ${
             isPinned 
@@ -61,9 +62,21 @@ const Comment = memo(({ comment, formatDate, index, isPinned = false }) => (
             </div>
         </div>
     </div>
-));
+    );
+});
 
-const CommentForm = memo(({ onSubmit, isSubmitting, error }) => {
+Comment.propTypes = {
+    comment: PropTypes.shape({
+        profile_image: PropTypes.string,
+        user_name: PropTypes.string.isRequired,
+        created_at: PropTypes.string,
+        content: PropTypes.string.isRequired,
+    }).isRequired,
+    formatDate: PropTypes.func.isRequired,
+    isPinned: PropTypes.bool,
+};
+
+const CommentForm = memo(function CommentForm({ onSubmit, isSubmitting }) {
     const [newComment, setNewComment] = useState('');
     const [userName, setUserName] = useState('');
     const [imagePreview, setImagePreview] = useState(null);
@@ -104,11 +117,12 @@ const CommentForm = memo(({ onSubmit, isSubmitting, error }) => {
         }
     }, []);
 
-    const handleSubmit = useCallback((e) => {
+    const handleSubmit = useCallback(async (e) => {
         e.preventDefault();
         if (!newComment.trim() || !userName.trim()) return;
-        
-        onSubmit({ newComment, userName, imageFile });
+
+        const submitted = await onSubmit({ newComment, userName, imageFile });
+        if (!submitted) return;
         setNewComment('');
         setUserName('');
         setImagePreview(null);
@@ -225,11 +239,17 @@ const CommentForm = memo(({ onSubmit, isSubmitting, error }) => {
     );
 });
 
+CommentForm.propTypes = {
+    onSubmit: PropTypes.func.isRequired,
+    isSubmitting: PropTypes.bool.isRequired,
+};
+
 const Komentar = () => {
     const [comments, setComments] = useState([]);
     const [pinnedComment, setPinnedComment] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState('');
+    const [success, setSuccess] = useState('');
 
     useEffect(() => {
         // Initialize AOS
@@ -247,6 +267,7 @@ const Komentar = () => {
                     .from('portfolio_comments')
                     .select('*')
                     .eq('is_pinned', true)
+                    .eq('is_approved', true)
                     .single();
                 
                 if (error && error.code !== 'PGRST116') {
@@ -272,6 +293,7 @@ const Komentar = () => {
                 .from('portfolio_comments')
                 .select('*')
                 .eq('is_pinned', false)
+                .eq('is_approved', true)
                 .order('created_at', { ascending: false });
             
             if (error) {
@@ -292,7 +314,7 @@ const Komentar = () => {
                     event: '*', 
                     schema: 'public', 
                     table: 'portfolio_comments',
-                    filter: 'is_pinned=eq.false'
+                    filter: 'is_approved=eq.true'
                 }, 
                 () => {
                     fetchComments(); // Refresh comments when changes occur
@@ -329,6 +351,7 @@ const Komentar = () => {
 
     const handleCommentSubmit = useCallback(async ({ newComment, userName, imageFile }) => {
         setError('');
+        setSuccess('');
         setIsSubmitting(true);
         
         try {
@@ -342,6 +365,7 @@ const Komentar = () => {
                         user_name: userName,
                         profile_image: profileImageUrl,
                         is_pinned: false,
+                        is_approved: false,
                         created_at: new Date().toISOString()
                     }
                 ]);
@@ -349,9 +373,12 @@ const Komentar = () => {
             if (error) {
                 throw error;
             }
+            setSuccess('Thank you! Your comment was sent to the admin and will appear after approval.');
+            return true;
         } catch (error) {
-            setError('Failed to post comment. Please try again.');
+            setError('Failed to send your comment for review. Please try again.');
             console.error('Error adding comment: ', error);
+            return false;
         } finally {
             setIsSubmitting(false);
         }
@@ -399,9 +426,15 @@ const Komentar = () => {
                         <p className="text-sm">{error}</p>
                     </div>
                 )}
+                {success && (
+                    <div role="status" className="flex items-start gap-2 p-4 text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
+                        <MessageCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                        <p className="text-sm leading-6">{success}</p>
+                    </div>
+                )}
                 
                 <div>
-                    <CommentForm onSubmit={handleCommentSubmit} isSubmitting={isSubmitting} error={error} />
+                    <CommentForm onSubmit={handleCommentSubmit} isSubmitting={isSubmitting} />
                 </div>
 
                 <div className="space-y-4 h-[328px] overflow-y-auto overflow-x-hidden custom-scrollbar pt-1 pr-1 " data-aos="fade-up" data-aos-delay="200">
@@ -411,7 +444,6 @@ const Komentar = () => {
                             <Comment 
                                 comment={pinnedComment} 
                                 formatDate={formatDate}
-                                index={0}
                                 isPinned={true}
                             />
                         </div>
@@ -424,19 +456,18 @@ const Komentar = () => {
                             <p className="text-gray-400">No comments yet. Start the conversation!</p>
                         </div>
                     ) : (
-                        comments.map((comment, index) => (
+                        comments.map((comment) => (
                             <Comment 
                                 key={comment.id} 
                                 comment={comment} 
                                 formatDate={formatDate}
-                                index={index + (pinnedComment ? 1 : 0)}
                                 isPinned={false}
                             />
                         ))
                     )}
                 </div>
             </div>
-            <style jsx>{`
+            <style>{`
                 .custom-scrollbar::-webkit-scrollbar {
                     width: 6px;
                 }

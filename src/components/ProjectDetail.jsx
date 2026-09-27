@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { useParams, useNavigate } from "react-router-dom";
+import { supabase } from "../supabase";
 import {
   ArrowLeft,
   ExternalLink,
@@ -107,7 +108,7 @@ const handleGithubClick = (githubLink) => {
     Swal.fire({
       icon: "info",
       title: "Source Code Private",
-      text: "Maaf, source code untuk proyek ini bersifat privat.",
+      text: "Sorry, the source code for this project is private.",
       confirmButtonText: "Mengerti",
       confirmButtonColor: "#3085d6",
       background: "#030014",
@@ -122,25 +123,28 @@ const ProjectDetails = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
   const [project, setProject] = useState(null);
-  const [isImageLoaded, setIsImageLoaded] = useState(false);
-
+  const [loadState, setLoadState] = useState("loading");
   useEffect(() => {
     window.scrollTo(0, 0);
-    const storedProjects = JSON.parse(localStorage.getItem("projects")) || [];
-    // Cari project berdasarkan slug yang di-generate dari Title
-    const selectedProject = storedProjects.find(
-      (p) => toSlug(p.Title) === slug,
-    );
+    let active = true;
 
-    if (selectedProject) {
-      const enhancedProject = {
-        ...selectedProject,
-        Features: selectedProject.Features || [],
-        TechStack: selectedProject.TechStack || [],
-        Github: selectedProject.Github || "https://github.com/EkiZR",
-      };
-      setProject(enhancedProject);
+    const cachedProjects = JSON.parse(localStorage.getItem("projects") || "[]");
+    const cachedProject = cachedProjects.find((item) => item.slug === slug || toSlug(item.Title) === slug);
+    if (cachedProject) {
+      setProject({ ...cachedProject, Features: cachedProject.Features || [], TechStack: cachedProject.TechStack || [], Github: cachedProject.Github || "https://github.com/agegnehuy" });
     }
+
+    const fetchProject = async () => {
+      const { data, error } = await supabase.from("projects").select("*").eq("is_published", true);
+      if (!active) return;
+      if (error) { setLoadState(cachedProject ? "ready" : "error"); return; }
+      const selected = (data || []).find((item) => item.slug === slug || toSlug(item.Title) === slug);
+      if (!selected) { setLoadState("not-found"); return; }
+      setProject({ ...selected, Features: selected.Features || [], TechStack: selected.TechStack || [], Github: selected.Github || "https://github.com/agegnehuy" });
+      setLoadState("ready");
+    };
+    fetchProject();
+    return () => { active = false; };
   }, [slug]);
 
   if (!project) {
@@ -149,32 +153,32 @@ const ProjectDetails = () => {
         <div className="text-center space-y-6 animate-fadeIn">
           <div className="w-16 h-16 md:w-24 md:h-24 mx-auto border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
           <h2 className="text-xl md:text-3xl font-bold text-white">
-            Loading Project...
+            {loadState === "not-found" ? "Project not found" : loadState === "error" ? "Unable to load project" : "Loading project…"}
           </h2>
         </div>
       </div>
     );
   }
 
-  const projectUrl = `https://ekizr.com/project/${toSlug(project.Title)}`;
+  const projectUrl = `https://agegnehuy.com/project/${project.slug || toSlug(project.Title)}`;
 
   return (
     <>
       <Helmet>
-        <title>{project.Title} — Eki Zulfar Rachman</title>
+        <title>{project.Title} — Agegnehu Yelib Tesfa</title>
         <meta
           name="description"
           content={
             project.Description
               ? project.Description.slice(0, 155)
-              : `Project ${project.Title} oleh Eki Zulfar Rachman — Frontend Web Developer.`
+              : `Project ${project.Title} by Agegnehu Yelib Tesfa — Software Developer and Digital Systems Specialist.`
           }
         />
         <meta name="robots" content="index, follow" />
         <link rel="canonical" href={projectUrl} />
         <meta
           property="og:title"
-          content={`${project.Title} — Eki Zulfar Rachman`}
+          content={`${project.Title} — Agegnehu Yelib Tesfa`}
         />
         <meta
           property="og:description"
@@ -192,8 +196,8 @@ const ProjectDetails = () => {
             "url": "${projectUrl}",
             "author": {
               "@type": "Person",
-              "name": "Eki Zulfar Rachman",
-              "url": "https://ekizr.com"
+              "name": "Agegnehu Yelib Tesfa",
+              "url": "https://agegnehuy.com"
             }
           }
         `}</script>
@@ -244,7 +248,13 @@ const ProjectDetails = () => {
                   </p>
                 </div>
 
+                <dl className="grid grid-cols-2 gap-3 text-sm">
+                  {[["Type", project.category], ["Context", project.client], ["Role", project.project_role], ["Dates", [project.started_at, project.completed_at].filter(Boolean).join(" — ")]].filter(([, value]) => value).map(([label, value]) => <div key={label} className="rounded-xl border border-white/10 bg-white/5 p-3"><dt className="text-slate-500">{label}</dt><dd className="mt-1 text-slate-200">{value}</dd></div>)}
+                </dl>
                 <ProjectStats project={project} />
+                <div className="space-y-5">
+                  {[["Challenge", project.challenge], ["Approach", project.approach], ["Outcome", project.outcome], ["Credits", project.credits]].filter(([, value]) => value).map(([heading, value]) => <section key={heading} className="rounded-2xl border border-white/10 bg-white/[0.03] p-5"><h2 className="text-xl font-semibold text-white">{heading}</h2><p className="mt-2 text-slate-300 leading-7">{value}</p></section>)}
+                </div>
 
                 <div className="flex flex-wrap gap-3 md:gap-4">
                   <a
@@ -299,11 +309,11 @@ const ProjectDetails = () => {
                     src={project.Img}
                     alt={project.Title}
                     className="w-full object-cover transform transition-transform duration-700 will-change-transform group-hover:scale-105"
-                    onLoad={() => setIsImageLoaded(true)}
                   />
                   <div className="absolute inset-0 border-2 border-white/0 group-hover:border-white/10 transition-colors duration-300 rounded-2xl" />
                 </div>
 
+                {Array.isArray(project.gallery) && project.gallery.length > 0 && <section><h2 className="text-xl font-semibold mb-4">Screenshot gallery</h2><div className="grid sm:grid-cols-2 gap-4">{project.gallery.map((item, index) => <figure key={`${item.url || item}-${index}`} className="rounded-xl overflow-hidden border border-white/10 bg-white/5"><a href={item.url || item} target="_blank" rel="noreferrer"><img src={item.url || item} alt={item.caption || `${project.Title} screenshot ${index + 1}`} className="w-full aspect-video object-cover" loading="lazy"/></a><figcaption className="p-3 text-sm text-slate-400">{item.caption || `Screenshot ${index + 1}`}</figcaption></figure>)}</div></section>}
                 <div className="bg-white/[0.02] backdrop-blur-xl rounded-2xl p-8 border border-white/10 space-y-6 hover:border-white/20 transition-colors duration-300 group">
                   <h3 className="text-xl font-semibold text-white/90 flex items-center gap-3">
                     <Star className="w-5 h-5 text-yellow-400 group-hover:rotate-[20deg] transition-transform duration-300" />
@@ -326,7 +336,7 @@ const ProjectDetails = () => {
           </div>
         </div>
 
-        <style jsx>{`
+        <style>{`
           @keyframes blob {
             0% {
               transform: translate(0px, 0px) scale(1);
