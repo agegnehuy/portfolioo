@@ -23,16 +23,27 @@ alter table public.services enable row level security;
 alter table public.articles enable row level security;
 alter table public.testimonials enable row level security;
 alter table public.site_content enable row level security;
+
+drop policy if exists "public read published services" on public.services;
 create policy "public read published services" on public.services for select using (is_published = true);
+drop policy if exists "public read published articles" on public.articles;
 create policy "public read published articles" on public.articles for select using (is_published = true);
+drop policy if exists "public read approved testimonials" on public.testimonials;
 create policy "public read approved testimonials" on public.testimonials for select using (is_approved = true);
+drop policy if exists "public submit testimonials" on public.testimonials;
 create policy "public submit testimonials" on public.testimonials for insert with check (is_approved = false);
+drop policy if exists "public read site content" on public.site_content;
 create policy "public read site content" on public.site_content for select using (true);
+drop policy if exists "admin manage services" on public.services;
 create policy "admin manage services" on public.services for all to authenticated using (exists(select 1 from public.profiles where id = auth.uid() and role = 'admin')) with check (exists(select 1 from public.profiles where id = auth.uid() and role = 'admin'));
+drop policy if exists "admin manage articles" on public.articles;
 create policy "admin manage articles" on public.articles for all to authenticated using (exists(select 1 from public.profiles where id = auth.uid() and role = 'admin')) with check (exists(select 1 from public.profiles where id = auth.uid() and role = 'admin'));
+drop policy if exists "admin manage testimonials" on public.testimonials;
 create policy "admin manage testimonials" on public.testimonials for all to authenticated using (exists(select 1 from public.profiles where id = auth.uid() and role = 'admin')) with check (exists(select 1 from public.profiles where id = auth.uid() and role = 'admin'));
+drop policy if exists "admin manage site content" on public.site_content;
 create policy "admin manage site content" on public.site_content for all to authenticated using (exists(select 1 from public.profiles where id = auth.uid() and role = 'admin')) with check (exists(select 1 from public.profiles where id = auth.uid() and role = 'admin'));
 drop policy if exists "public read projects" on public.projects;
+drop policy if exists "public read published projects" on public.projects;
 create policy "public read published projects" on public.projects for select using (is_published = true);
 
 insert into public.services (slug,title,summary,audience,description,deliverables,technologies,is_published,order_index) values
@@ -58,3 +69,5 @@ update storage.buckets
 set file_size_limit = 5242880,
     allowed_mime_types = array['image/jpeg','image/png','image/webp']
 where id in ('project-images','certificate-images','profile-images');
+
+notify pgrst, 'reload schema';
