@@ -13,7 +13,7 @@ export default function Navbar() {
 
   return <nav aria-label="Primary navigation" className="fixed inset-x-0 top-0 z-50 border-b border-white/5 bg-[#030014]/85 backdrop-blur-xl">
     <div className="mx-auto px-[5%] lg:px-[7%] h-16 flex items-center justify-between">
-      <Link to="/#Home" className="text-xl font-bold bg-gradient-to-r from-purple-400 to-indigo-400 bg-clip-text text-transparent">agegnehuy</Link>
+      <Link to="/#Home" className="text-xl font-bold bg-gradient-to-r from-purple-400 to-indigo-400 bg-clip-text text-transparent">agih</Link>
       <div className="hidden lg:flex items-center gap-7">
         {navItems.map(([to, label]) => <Link key={to} to={to} className={navLinkClass(active(to))}>{label}</Link>)}
       </div>
