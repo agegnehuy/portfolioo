@@ -16,6 +16,7 @@ import AOS from "aos";
 import "aos/dist/aos.css";
 import Certificate from "../components/Certificate";
 import { Code, Award, Boxes } from "lucide-react";
+import { withoutEzikrProject } from "../utils/projects";
 
 
 const ToggleButton = ({ onClick, isShowingMore }) => (
@@ -166,7 +167,7 @@ export default function FullWidthTabs() {
       if (certificatesResponse.error) throw certificatesResponse.error;
 
       // Supabase returns results in the 'data' property
-      const projectData = projectsResponse.data || [];
+      const projectData = withoutEzikrProject(projectsResponse.data || []);
       const certificateData = certificatesResponse.data || [];
 
       setProjects(projectData);
@@ -191,7 +192,7 @@ export default function FullWidthTabs() {
     const cachedCertificates = localStorage.getItem('certificates');
 
     if (cachedProjects && cachedCertificates) {
-        setProjects(JSON.parse(cachedProjects));
+        setProjects(withoutEzikrProject(JSON.parse(cachedProjects)));
         setCertificates(JSON.parse(cachedCertificates));
     }
     

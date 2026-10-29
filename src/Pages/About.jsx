@@ -2,6 +2,7 @@ import { useEffect, useState, memo, useMemo } from "react"
 import { FileText, Code, Award, ArrowUpRight, Sparkles, UserCheck } from "lucide-react"
 import AOS from 'aos'
 import { supabase } from "../supabase";
+import { withoutEzikrProject } from "../utils/projects";
 import 'aos/dist/aos.css'
 
 // Memoized Components
@@ -137,7 +138,7 @@ const AboutPage = () => {
 
   useEffect(() => {
     const updateStats = () => {
-      const storedProjects = JSON.parse(localStorage.getItem("projects") || "[]");
+      const storedProjects = withoutEzikrProject(JSON.parse(localStorage.getItem("projects") || "[]"));
       const storedCertificates = JSON.parse(localStorage.getItem("certificates") || "[]");
       
       setStats({

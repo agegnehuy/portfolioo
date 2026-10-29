@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import Swal from "sweetalert2";
 import { toSlug } from "../utils/slug";
+import { isEzikrProject } from "../utils/projects";
 
 const TECH_ICONS = {
   React: Globe,
@@ -129,7 +130,9 @@ const ProjectDetails = () => {
     let active = true;
 
     const cachedProjects = JSON.parse(localStorage.getItem("projects") || "[]");
-    const cachedProject = cachedProjects.find((item) => item.slug === slug || toSlug(item.Title) === slug);
+    const cachedProject = cachedProjects.find((item) =>
+      !isEzikrProject(item) && (item.slug === slug || toSlug(item.Title) === slug)
+    );
     if (cachedProject) {
       setProject({ ...cachedProject, Features: cachedProject.Features || [], TechStack: cachedProject.TechStack || [], Github: cachedProject.Github || "https://github.com/agegnehuy" });
     }
@@ -138,7 +141,9 @@ const ProjectDetails = () => {
       const { data, error } = await supabase.from("projects").select("*").eq("is_published", true);
       if (!active) return;
       if (error) { setLoadState(cachedProject ? "ready" : "error"); return; }
-      const selected = (data || []).find((item) => item.slug === slug || toSlug(item.Title) === slug);
+      const selected = (data || []).find((item) =>
+        !isEzikrProject(item) && (item.slug === slug || toSlug(item.Title) === slug)
+      );
       if (!selected) { setLoadState("not-found"); return; }
       setProject({ ...selected, Features: selected.Features || [], TechStack: selected.TechStack || [], Github: selected.Github || "https://github.com/agegnehuy" });
       setLoadState("ready");
