@@ -4,6 +4,8 @@ jobs:
   build:
     docker:
       - image: cimg/node:22.17
+    environment:
+      VITE_BASE_PATH: /portfolioo/
     steps:
       - checkout
       - run:
@@ -12,8 +14,52 @@ jobs:
       - run:
           name: Build portfolio
           command: npm run build
+      - persist_to_workspace:
+          root: .
+          paths:
+            - dist
+  deploy:
+    docker:
+      - image: cimg/node:22.17
+    steps:
+      - attach_workspace:
+          at: .
+      - add_ssh_keys:
+          fingerprints:
+            - "SHA256:B9gzaWaeqoQqIkah+5q5p6aehOSgzCCn8rH20bNwUSA"
+      - run:
+          name: Publish built site to GitHub Pages
+          command: |
+            : "${VITE_SUPABASE_URL:?Set VITE_SUPABASE_URL in CircleCI}"
+            : "${VITE_SUPABASE_ANON_KEY:?Set VITE_SUPABASE_ANON_KEY in CircleCI}"
+            cd dist
+            cp index.html 404.html
+            touch .nojekyll
+            git init
+            git config user.name "CircleCI deployment"
+            git config user.email "circleci-deploy@users.noreply.github.com"
+            git remote add origin git@github.com:agegnehuy/portfolioo.git
+            if git fetch origin refs/heads/gh-pages:refs/remotes/origin/gh-pages; then
+              git reset --soft refs/remotes/origin/gh-pages
+            fi
+            git add -A
+            if git diff --cached --quiet; then
+              echo "Site is already up to date"
+              exit 0
+            fi
+            git commit -m "Deploy portfolio to GitHub Pages"
+            git push origin HEAD:refs/heads/gh-pages
 
 workflows:
   portfolio:
     jobs:
-      - build
+      - build:
+          filters:
+            branches:
+              ignore: gh-pages
+      - deploy:
+          requires:
+            - build
+          filters:
+            branches:
+              only: main
