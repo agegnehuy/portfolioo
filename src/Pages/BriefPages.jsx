@@ -12,7 +12,7 @@ const fixedArticleCovers = {
   "building-a-portfolio-as-a-working-system": "/insight-useful-website.webp",
   "what-i-learned-connecting-react-and-supabase": "/insight-digital-trust.webp",
 };
-const articleCover = (article) => fixedArticleCovers[article.slug] || article.cover_image;
+const articleCover = (article) => { const url = fixedArticleCovers[article.slug] || article.cover_image; return url?.startsWith("/") && !url.startsWith("//") ? import.meta.env.BASE_URL + url.slice(1) : url; };
 
 function PageHeader({ eyebrow, title, description }) {
   return <header className="max-w-3xl mb-12">
