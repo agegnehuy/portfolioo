@@ -289,7 +289,7 @@ const AboutPage = () => {
 
             <div className="flex flex-col lg:flex-row items-center lg:items-start gap-4 lg:gap-4 lg:px-0 w-full">
               <a
-                h
+                href={import.meta.env.BASE_URL + "Agegnehu-Yelib-Tesfa-CV.pdf"}
                 download="Agegnehu-Yelib-Tesfa-CV.pdf"
                 className="w-full lg:w-auto"
                 aria-label="Download Agegnehu Yelib Tesfa CV"
