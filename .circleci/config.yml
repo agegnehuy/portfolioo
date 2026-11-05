@@ -32,6 +32,8 @@ jobs:
           command: |
             : "${VITE_SUPABASE_URL:?Set VITE_SUPABASE_URL in CircleCI}"
             : "${VITE_SUPABASE_ANON_KEY:?Set VITE_SUPABASE_ANON_KEY in CircleCI}"
+            mkdir -p ~/.ssh
+            echo 'github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl' >> ~/.ssh/known_hosts
             cd dist
             cp index.html 404.html
             touch .nojekyll
