@@ -52,7 +52,7 @@ const ProfileImage = memo(() => (
           <div className="absolute inset-0 bg-gradient-to-t from-purple-500/20 via-transparent to-blue-500/20 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-700 hidden sm:block" />
           
           <img
-            src="/beloved-profile.webp"
+            src={`${import.meta.env.BASE_URL}beloved-profile.webp`}
             alt="Agegnehu Yelib Tesfa"
             width="320"
             height="320"
@@ -289,7 +289,7 @@ const AboutPage = () => {
 
             <div className="flex flex-col lg:flex-row items-center lg:items-start gap-4 lg:gap-4 lg:px-0 w-full">
               <a
-                href="/Agegnehu-Yelib-Tesfa-CV.pdf"
+                href={import.meta.env.BASE_URL + "Agegnehu-Yelib-Tesfa-CV.pdf"}
                 download="Agegnehu-Yelib-Tesfa-CV.pdf"
                 className="w-full lg:w-auto"
                 aria-label="Download Agegnehu Yelib Tesfa CV"

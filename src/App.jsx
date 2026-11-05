@@ -49,7 +49,7 @@ function App() {
   const [showWelcome, setShowWelcome] = useState(true);
   return <HelmetProvider>
     <div className="pointer-events-none"><AnimatedBackground /></div>
-    <BrowserRouter>
+    <BrowserRouter basename={import.meta.env.BASE_URL}>
       <a href="#main-content" className="fixed left-3 top-3 z-[100] -translate-y-24 focus:translate-y-0 rounded-lg bg-white px-4 py-2 text-black transition">Skip to main content</a>
       <ScrollManager />
       <Routes>
