@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://agegnehuy.com/sitemap.xml
